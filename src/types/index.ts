@@ -1,0 +1,12 @@
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+
+export type Profile = {
+  id: string;
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  role: UserRole;
+  created_at?: string;
+  updated_at?: string;
+};
