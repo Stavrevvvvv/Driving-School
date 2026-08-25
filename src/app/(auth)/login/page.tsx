@@ -1,7 +1,14 @@
 "use client";
 import React, { useState } from 'react';
+import type { UserRole } from '@/types';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+
+const dashboardRoutes: Record<UserRole, string> = {
+  ADMIN: '/admin',
+  TEACHER: '/teacher',
+  STUDENT: '/student',
+};
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,10 +25,31 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setError(error.message);
-      } else {
-        // On success, navigate to root; server will redirect to role dashboard
-        router.push('/');
+        return;
       }
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const user = userData.user;
+
+      if (userError || !user) {
+        setError('Unable to load the signed-in user.');
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      const role = profile?.role;
+      if (profileError || role !== 'ADMIN' && role !== 'TEACHER' && role !== 'STUDENT') {
+        await supabase.auth.signOut();
+        setError('Your account role is not available yet. Please contact support.');
+        return;
+      }
+
+      router.replace(dashboardRoutes[role]);
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
       else setError(String(err ?? 'Login failed'));
