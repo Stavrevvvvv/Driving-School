@@ -42,14 +42,20 @@ export default function LoginPage() {
         .eq('id', user.id)
         .single();
 
-      const role = profile?.role;
-      if (profileError || role !== 'ADMIN' && role !== 'TEACHER' && role !== 'STUDENT') {
-        await supabase.auth.signOut();
-        setError('Your account role is not available yet. Please contact support.');
-        return;
-      }
+        const role = profile?.role;
 
-      router.replace(dashboardRoutes[role]);
+        if (
+            profileError ||
+            (role !== 'ADMIN' && role !== 'TEACHER' && role !== 'STUDENT')
+            ) {
+            await supabase.auth.signOut();
+            setError('Your account role is not available yet. Please contact support.');
+            return;
+        }
+
+        const validRole: UserRole = role;
+
+        router.replace(dashboardRoutes[validRole]);
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
       else setError(String(err ?? 'Login failed'));
